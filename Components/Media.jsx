@@ -1,7 +1,7 @@
 import React from 'react'
 import Loader from 'react-loader-spinner'
 
-function Media({ photo = false, video = false, file = false, children, state, name, onChange }) {
+function Media({ photo = false, video = false, file = false, children, state, name, onChange, mult }) {
     const [loader,setLoader] = React.useState(false)
     const ref = React.useRef(null)
     const handleClick = () => {
@@ -15,10 +15,10 @@ function Media({ photo = false, video = false, file = false, children, state, na
     return (
         <div>
             <label htmlFor={name}>{children}</label>
-            <input name="logo"  multiple={file} id="logoData" type="file"
+            <input name="logo"  multiple={file || mult} id="logoData" type="file"
                 accept={video ? ".mp4,.MP4" : photo ? "image/*" : file ? ".doc,.docx,.PDF,.pdf":null}
                 ref={ref} className="none"  onChange={onChange} />
-            {photo ?
+            {photo && !mult ?
             <>
                     {loader && <Loader
                         type="TailSpin"
@@ -36,6 +36,19 @@ function Media({ photo = false, video = false, file = false, children, state, na
                             </center>
                     </div>
             </>
+                : null}
+            {photo && mult ?
+                <>
+                    {state && state.portfolio && "dfvdsvf" && <center> {[...state.portfolio].map(e => <><span>{e.name}</span><br /></>)}  </center>}
+                    <div className="rad" onClick={handleClick}>
+
+                        <center>   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-camera-fill" viewBox="0 0 16 16">
+                            <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" />
+                            <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z" />
+                        </svg>
+                        </center>
+                    </div>
+                </>
                 : null}
             {video ?
                 <>

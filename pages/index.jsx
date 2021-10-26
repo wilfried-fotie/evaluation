@@ -49,11 +49,13 @@ export default function Home() {
         <h1>Bienvenue à estuaire emploie!</h1>
 
         <p>
-          <span className="error">Règle:</span> Lors du remplissage de ce fomulaire, les champs qui ne vous sont pas familier ou assez explicite veuillez marquer <u className="error">"aucun"</u>  à l'intérieur.
+          <span className="error">Règle:</span> Lors du remplissage de ce fomulaire, les champs qui ne vous sont pas familiés ou assez explicite veuillez marquer <u className="error">"aucun"</u>  à l'intérieur.
         </p>
         
 
-
+        <center >
+          <h2>Commencer à remplire</h2>
+</center>
         <App/>
 
        
@@ -74,7 +76,7 @@ export function Modal() {
 
    
     <p className="modal">
-      Svp veuillez patienter que vos informations soient envoyés!! <br />
+      Svp veuillez patienter que vos informations soient envoyées!! <br />
         <center>
         
          <Loader
@@ -91,6 +93,25 @@ export function Modal() {
 }
 
 
+export function Modal2() {
+
+  return (<>
+    <div className="modalContainer">
+
+      <p className="modal">
+        <center><h1 style={{ color: "green" }}>Bravo</h1></center>
+
+       Vos informations ont bien été enregistrés <br />
+      
+
+      </p>
+
+    </div>
+  </>)
+
+}
+
+
 export  function App() {
   const { register, handleSubmit, formState: { errors,isValid } } = useForm({mode: "onTouched"});
   const [loader, setLoader] = React.useState(false)
@@ -98,29 +119,31 @@ export  function App() {
   const [state2, setState2] = React.useState()
   const [state3, setState3] = React.useState()
   const [state4, setState4] = React.useState()
+  const [state5, setState5] = React.useState()
+  const [mod, setMod] = React.useState(false)
 
   const onSubmit = data => {
-    setState4(true)
   
-    if (isValid && state.logoValue && state3.present && state2.files) {
+    if (isValid) {
       setLoader(true);
       axios.all([
-      Add({ ...data, logo: data.tel + state.logoValue.name, files: [...state2.files].map(e => data.tel + e.name), present: data.tel + state3.present.name}),
-      uploadAll(data.tel + state.logoValue.name, state.logoValue, "Profil/"),
-      uploadAll(data.tel + state3.present.name, state3.present, "Profil/"),
+        Add({ ...data, logo: state ? (data.tel + state.logoValue.name) : "aucun", files: state2 ? [...state2.files].map(e => data.tel + e.name) : "aucun", present: state3 ? (data.tel + state3.present.name) : "aucun", portfolio: state5 ? [...state5.portfolio].map(e => data.tel + e.name) : "aucun"}),
+        state && uploadAll(data.tel + state.logoValue.name, state.logoValue, "Profil/"),
+        state3 && uploadAll(data.tel + state3.present.name, state3.present, "Profil/"),
 
-      [...state2.files].forEach(e => uploadAll(data.tel + e.name,e,"Profil/")),
+        state2 && [...state2.files].forEach(e => uploadAll(data.tel + e.name, e, "Profil/")),
+        state5 && [...state5.portfolio].forEach(e => uploadAll(data.tel + e.name, e, "Profil/")),
 
-      ]).then(() => alert("Vous avez bien été enregisté")).catch(() => alert("une erreur est survenu")).finally(() => { setLoader(false);})
+      ]).then(() => setMod(true)).catch(() => alert("une erreur est survenu")).finally(() => { setLoader(false);})
     
     }
     
 
 
-
-
   }
-  console.log(errors);
+ 
+
+
   const handleImageChange = (e) => {
     const name = e.target.name
     const id = e.target.id
@@ -146,6 +169,8 @@ export  function App() {
   }
 
 
+
+
   const handleImageChange2 = (e) => {
     const name = e.target.name
     const id = e.target.id
@@ -161,6 +186,30 @@ export  function App() {
             ...s,
             filesRes: ev.target.result,
             files:  e.target.files,
+
+          }
+        });
+      };
+
+    }
+
+  }
+
+  const handleImageChange8 = (e) => {
+    const name = e.target.name
+    const id = e.target.id
+
+    if (e.target.files && e.target.files[0]) {
+
+
+      let reader = new FileReader();
+      reader.readAsDataURL(e.target.files[0]);
+      reader.onload = (ev) => {
+        setState5(s => {
+          return {
+            ...s,
+            portfolioRes: ev.target.result,
+            portfolio: e.target.files,
 
           }
         });
@@ -201,19 +250,17 @@ export  function App() {
     <form onSubmit={handleSubmit(onSubmit)}>
 <div className="table">
         <span>
-          Photo de profil
+         Importer une photo de profil
         </span>
         <Media photo onChange={handleImageChange} state={state} />
-        {state4  && !state.logoValue &&  <span className="error">
-Ce champs est réquis
-        </span>}
+       
       </div>
 
       <div className="table">
         <span>
           Nom complet
         </span>
-        <input type="text" placeholder="Nom complet" {...register("nom", { required: true, maxLength: 80 })} />
+        <input type="text" placeholder="Exp: Fotie wilfried" {...register("nom", { required: true, maxLength: 80 })} />
 {errors && errors.nom && <div className="error">
 Ce champs est réquis
 </div> }
@@ -222,34 +269,42 @@ Ce champs est réquis
         <span>
           Date de naissance
         </span>
-        <input type="date" {...register("naissance", { required: true, maxLength: 100 })} />
+        <input type="text" placeholder="Exp: 18-03-1998 à Bafoussam"{...register("naissance", { required: true, maxLength: 100 })} />
         {errors && errors.naissance && <div className="error">
           Ce champs est réquis
         </div>}
       </div>
+
+    
       <div className="table">
         <span>
           Adresse mail
         </span>
-        <input type="email" placeholder="Adresse mail" {...register("mail", { required: true, pattern: /^\S+@\S+$/i })} />
-        {errors && errors.mail && <div className="error">
-          Ce champs est réquis
-        </div>}
+        <input type="email" placeholder="Exp: fotie@gmail.com ou Aucun" {...register("mail", {  pattern: /^\S+@\S+$/i })} />
+        
       </div>
       <div className="table">
         <span>
           Numéro de téléphone
         </span>
-        <input type="tel" placeholder="Numéro de téléphone" {...register("tel", { required: true, min: 600000000, max: 699999999 })} />
+        <input type="tel" placeholder="Exp: 678656770" {...register("tel", { required: true, min: 600000000, max: 699999999 })} />
         {errors && errors.tel && <div className="error">
           Ce champs est réquis
         </div>}
       </div>
-      <div className="table">
+      <div className="table" >
         <span>
-          Qualification professionelle ou scolaire
+          Qualifications Scolaire
         </span>
-        <textarea placeholder="Qualification professionelle ou scolaire" {...register("Qualification", { required: true, max: 300 })} />
+        <table border="2px">
+          <tr ><th colSpan="3">Diplome - Année - Ecole</th></tr>
+          <tr>
+            <td colSpan="3">
+              <textarea placeholder="Bacc C  - 2019  - Lycéé bilingue de bafoussam" {...register("Qualification", { required: true, })} />
+              
+</td>
+          </tr>
+</table>
         {errors && errors.Qualification && <div className="error">
           Ce champs est réquis
         </div>}
@@ -264,61 +319,64 @@ Ce champs est réquis
           Ce champs est réquis
         </div>}
       </div>
-      <div className="table">
+      <div className="table" >
         <span>
-          Nombre d'années d'experience
+          Qualifications Professionelles
         </span>
-        <input type="number" placeholder="Nombre d'années d'experience" {...register("experience", { required: true, max: 45 })} />
-        {errors && errors.experience && <div className="error">
-          Ce champs est réquis
-        </div>}
+        <table border="2px">
+          <tr ><th colSpan="3">Attestation - Années - description</th></tr>
+          <tr>
+            <td colSpan="3">
+              <textarea placeholder="Attestation Microsoft Word  - 2019  - pour apprendre à saisir correvtement." {...register("QualificationPro")} />
+            </td>
+          </tr>
+        </table>
+
       </div>
       <div className="table">
         <span>
-          Langue parlé ou ecrite
+          Langue parlées
         </span>
-        <input type="textarea" placeholder="Langue parlé ou ecrite" {...register("Langues", { required: true })} />
-        {errors && errors.Langues && <div className="error">
+        <input type="textarea" placeholder="Exp: français et anglais" {...register("LanguesParle", { required: true })} />
+        {errors && errors.LanguesParle && <div className="error">
           Ce champs est réquis
         </div>}
-      </div>
-     <div className="df">
-        <span>
-          Type de salaire
-        </span>
-     
-      <select {...register("Type de salaire", { required: true })}>
-          <option value="journalier">Aucun</option>
-          <option value="journalier">journalier</option>
-        <option value="hebdomadaire">hebdomadaire</option>
-        <option value="mensuel">mensuel</option>
-        <option value="annuel">annuel</option>
-      </select>
       </div>
 
       <div className="table">
         <span>
-          Salaire
+          Langue écrites
         </span>
-        <input type="number" placeholder="Salaire" {...register("Salaire", { required: true })} />
+        <input type="textarea" placeholder="Exp: français et anglais" {...register("LanguesEcrites", { required: true })} />
+        {errors && errors.LanguesEcrites && <div className="error">
+          Ce champs est réquis
+        </div>}
+      </div>
+    
+
+      <div className="table">
+        <span>
+          Prétention Salariale
+        </span>
+        <input type="text" placeholder="Exp: 60  0000 - 200 0000" {...register("Salaire", { required: true })} />
         {errors && errors.Salaire && <div className="error">
           Ce champs est réquis
         </div>}
       </div>
       <div className="table">
         <span>
-         Profession
+         Profession (Pour les etudiants à temps plein écrire: stagiaire en spécialité)
         </span>
-        <input type="text" placeholder="Profession" {...register("Profession", { required: true })} />
+        <input type="text" placeholder="Exp: Stagiaire en marketing Exp2 : Développeur mobile" {...register("Profession", { required: true })} />
         {errors && errors.Profession && <div className="error">
           Ce champs est réquis
         </div>}
       </div>
       <div className="table">
         <span>
-          Description de la profession
+          Choix du métier que vous aimerer faire
         </span>
-        <input type="text" placeholder="Description de la profession" {...register("description_profession", { required: true })} />
+        <input type="text" placeholder="Exp: agronome" {...register("description_profession", { required: true })} />
         {errors && errors.description_profession && <div className="error">
           Ce champs est réquis
         </div>}
@@ -369,9 +427,7 @@ Ce champs est réquis
           Vidéo de présentation
         </span>
         <Media video onChange={handleImageChange3} state={state3} />
-        {state4 && !state3.present && <span className="error">
-          Ce champs est réquis
-        </span>}
+      
       </div>
 
 
@@ -396,18 +452,18 @@ Ce champs est réquis
 
       <div className="table">
         <span>
-          Portfolio
+          Portfolio( Image de vos réalisations ou certifications)
         </span>
-        <input type="text" placeholder="Portfolio" {...register("portfolio",{required: true} )} />
-        {errors && errors.portfolio && <div className="error">
-          Ce champs est réquis
-        </div>}
+       
+        <Media photo mult onChange={handleImageChange8}  state={state5} />
+
+
       </div>
       <div className="table">
         <span>
           Différents Prix obtenu dans la vie
         </span>
-        <textarea placeholder="Différents Prix obtenu dans la vie" {...register("price", { required: true })} />
+        <textarea placeholder="Exp: Diplome de chant - 2021 - à l'église" {...register("price", { required: true })} />
         {errors && errors.price && <div className="error">
           Ce champs est réquis
         </div>}
@@ -416,31 +472,32 @@ Ce champs est réquis
         <span>
           Différentes expériences
         </span>
-        <input type="text" placeholder="Différentes expériences" {...register("diff", { required: true })} />
+        <textarea placeholder="Exp: Employer à Insam - 2012-2014 Exp2: Employer à Camlait - 2018-2020 " {...register("diff", { required: true })} />
+
         {errors && errors.diff && <div className="error">
           Ce champs est réquis
         </div>}
       </div>
       <div className="table">
         <span>
-          Différentes formations scolaire et extra-scolaire
+          Différentes formations extra-scolaire
         </span>
-        <textarea placeholder="Différentes formations scolaire et extra-scolaire" {...register("form", { required: true })} />
+        <textarea placeholder="Exp: Formation en marketing - 2021 - sur openclassrooms " {...register("form", { required: true })} />
         {errors && errors.form && <div className="error">
           Ce champs est réquis
         </div>}
       </div>
  <div className="table">
         <span>
-          Importer votre CV ou vos Attestations
+          Importer votre CV
         </span>
         <Media file onChange={handleImageChange2} state={state2}/>
-        {state4 && !state2.files && <span className="error">
-          Ce champs est réquis
-        </span>}
+        
+        
 </div>
     
-      {loader && <Modal/>}
+      {loader && <Modal />}
+      {mod && <Modal2 />}
       
       <center> <button type="submit" className="btn df">  {loader && <Loader
         type="TailSpin"
