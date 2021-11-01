@@ -228,7 +228,7 @@ export function Page2({ setActivePage, info }) {
 
   return (<>
     <a className="btn" onClick={() => setActivePage(1)}>Retour</a>
-    <a className="btn" onClick={() => navigator.clipboard.writeText("/" + info.name  + "?id=" + info.id ) }>Copier le lien</a>
+    <a className="btn" onClick={() => navigator.clipboard.writeText("https://evaluation-ten.vercel.app/" + info.name  + "?id=" + info.id ) }>Copier le lien</a>
     
     <center> <h1>Questionnaire {info.name}</h1></center>
     <center> <button className="btn" onClick={() => setUser(true)}>Ajouter une question</button> </center>
