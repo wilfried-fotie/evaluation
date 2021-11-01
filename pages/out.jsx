@@ -25,6 +25,9 @@ function out() {
                 <h2>Compétences Générales</h2>
                 <center> <h1>{notes.trueGen + " / " + notes.genNbr}</h1> </center>
 
+                <h2>Compétences Entrepreneuriales</h2>
+                <center> <h1>{notes.trEn + " / " + 3}</h1> </center>Générales
+                
             </center>
         </main>
     )

@@ -141,9 +141,13 @@ export function Controller({  slug,values2,values,id }) {
     let router =  useRouter()
     const [loader, setLoader] = React.useState(false)
     const [state, setState] = React.useState(false)
+    const [state2, setState2] = React.useState(false)
     const handleChange = (e) => {
        setState(s=> ({...s,[e.target.name]: e.target.value}) )
-   }
+    }
+    const handleChange2 = (e) => {
+        setState2(s => ({ ...s, [e.target.name]: e.target.value }))
+    }
   
     const onSubmit = e => {
         e.preventDefault()
@@ -152,13 +156,20 @@ export function Controller({  slug,values2,values,id }) {
             simState.push(property)
            
         }
+        let simState2 = []
+        for (const property in state2) {
+            simState2.push(property)
+
+        }
+
         
-        if (simState.length == data.length) {
+        if (simState.length == data.length && simState2.length == 3 ) {
             setLoader(true)
-            Add({ ...state, spe_id: parseInt(id, 10) }, "userQuestionnaire", values.length.toString()).then(() => {
+            Add({ ...state,...state2, spe_id: parseInt(id, 10) }, "userQuestionnaire", values.length.toString()).then(() => {
                 setLoader(false)
                 let note = []
                 let note2 = []
+                let note3 = []
                 localStorage.removeItem("userToken")
 
                 for (const s in state) {
@@ -177,7 +188,17 @@ export function Controller({  slug,values2,values,id }) {
 
                 }
 
-                localStorage.setItem("note", JSON.stringify({speNbr: data.filter(e => e.type == "Objectifs Spécifiques").length, genNbr: data.filter(e => e.type == "Objectifs Généraux").length, trueSpe: note.length, trueGen: note2.length}))
+                for (const s2 in state2) {
+                    if (state2[s2] == "Oui") {
+                        
+                        note3.push(state2[s2])
+
+
+                    }
+
+                }
+
+                localStorage.setItem("note", JSON.stringify({trEn: note3.length,speNbr: data.filter(e => e.type == "Objectifs Spécifiques").length, genNbr: data.filter(e => e.type == "Objectifs Généraux").length, trueSpe: note.length, trueGen: note2.length}))
              
 
 
@@ -208,8 +229,10 @@ export function Controller({  slug,values2,values,id }) {
             <main className={styles.main}>
                 <div>Nb: Veuillez être honnête lors du remplissage de ce formulaire! il nous permetrra de vous preparer une formation apte à vos lacunes</div>
 
+                
+
                 <form onSubmit={onSubmit}>
-           <h2>Objectifs Spécifiques</h2>
+           <h2>Compétences Spécifiques</h2>
 
                     {data.filter(e => e.type == "Objectifs Spécifiques").map((e, j) => <div key={e.name + j}>
    
@@ -227,7 +250,7 @@ export function Controller({  slug,values2,values,id }) {
                 
                 </div>)}
 
-                     <h2>Objectifs Généraux</h2>
+                    <h2>Compétences Géneriques</h2>
 
                     {data.filter(e => e.type == "Objectifs Généraux").map((e, j) =>
                         <div key={e.name + j} className="table">
@@ -239,10 +262,46 @@ export function Controller({  slug,values2,values,id }) {
                                 <div className="df"> <input name={e.name} onChange={handleChange} value={state[e.name]} type="radio" value="Non" id={j + e.name + "non"} /> <label htmlFor={j + e.name + "non"}>Non</label> </div>
                                
                             </div>
-                      
+                          
+
                  
                 
-                </div>)}
+                        </div>)}
+                
+                
+                    <h2>Compétences Entrepreneuriales</h2>
+
+                    <div className="table">
+                        <div>
+                            Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise
+                        </div>
+                        <div>
+                            <div className="df">  <input name={"Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise"} onChange={handleChange2} value={state2["Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise"]} type="radio" value="Oui" id={"Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise" + "oui"} />  <label htmlFor={ "Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise"+ "oui"}>Oui</label></div>
+                            <div className="df"> <input name={"Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise"} onChange={handleChange2} value={state2["Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise"]} type="radio" value="Non" id={"Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise" + "non"} /> <label htmlFor={"Développer des compétences entrepreneuriales essentielles pour assurer le démarrage d'une entreprise" + "non"}>Non</label> </div>
+
+                        </div>
+                    </div>
+
+                    <div className="table">
+                        <div>
+                            Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet
+                        </div>
+                        <div>
+                            <div className="df">  <input name={"Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet"} onChange={handleChange2} value={state2["Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet"]} type="radio" value="Oui" id={"Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet" + "oui"} />  <label htmlFor={"Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet" + "oui"}>Oui</label></div>
+                            <div className="df"> <input name={"Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet"} onChange={handleChange2} value={state2["Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet"]} type="radio" value="Non" id={"Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet" + "non"} /> <label htmlFor={"Élaborer un plan d'affaires (business plan) afin de valider et concrétiser un projet" + "non"}>Non</label> </div>
+
+                        </div>
+                    </div>
+                    <div className="table">
+                        <div>
+                            Élaborer une stratégie d'obtention de financement
+                        </div>
+                        <div>
+                            <div className="df">  <input name={"Élaborer une stratégie d'obtention de financement"} onChange={handleChange2} value={state2["Élaborer une stratégie d'obtention de financement"]} type="radio" value="Oui" id={"Élaborer une stratégie d'obtention de financement" + "oui"} />  <label htmlFor={"Élaborer une stratégie d'obtention de financement" + "oui"}>Oui</label></div>
+                            <div className="df"> <input name={"Élaborer une stratégie d'obtention de financement"} onChange={handleChange2} value={state2["Élaborer une stratégie d'obtention de financement"]} type="radio" value="Non" id={"Élaborer une stratégie d'obtention de financement" + "non"} /> <label htmlFor={"Élaborer une stratégie d'obtention de financement" + "non"}>Non</label> </div>
+
+                        </div>
+                    </div>
                     <center> <button className="btn" >{loader && <Loader
                         type="TailSpin"
                         color="white"

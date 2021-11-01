@@ -235,12 +235,12 @@ export function Page2({ setActivePage, info }) {
     <center> <h2>Liste des questions</h2> </center>
     <table>
       <tbody>
-        <tr><td colSpan={2}>  <h5>Objectifs Spécifiques</h5></td></tr>
+        <tr><td colSpan={2}>  <h5>Compétences Spécifiques</h5></td></tr>
       
         {data.filter(e => e.spe_id == info.id && e.type == "Objectifs Spécifiques").map((e, j) => <tr key={j}><td>{e.name}</td><td><button onClick={() => handleUpdate(e.id, v )} className="btn">Modifier</button><button className="err" onClick={() => handleDelete(e.id )}>
           supprimé</button></td></tr>)}
         
-        <tr><td colSpan={2}> <h5>Objectifs Généraux</h5></td></tr>
+        <tr><td colSpan={2}> <h5>Compétences Généraux</h5></td></tr>
 
         {data.filter(e => e.spe_id == info.id && e.type == "Objectifs Généraux").map((e, j) => <tr key={j}><td>{e.name}</td><td><button onClick={() => handleUpdate(e.id, v )} className="btn">Modifier</button><button className="err" onClick={() => handleDelete(e.id )}>
           supprimé</button></td></tr>)}
@@ -344,8 +344,8 @@ v(false)
 
             <select {...register("type", { required: true })} >
 
-              <option value="Objectifs Spécifiques">Objectif Spécifique</option>
-              <option value="Objectifs Généraux">Objectif Généraux</option>
+              <option value="Objectifs Spécifiques">Compétences Spécifiques</option>
+              <option value="Objectifs Généraux">Compétences Générales</option>
             </select>
             
 
@@ -413,8 +413,8 @@ export function Modal3({ v, info,dataValue }) {
 
             <select {...register("type", { required: true })} >
 
-              <option value="Objectifs Spécifiques">Objectif Spécifique</option>
-              <option value="Objectifs Généraux">Objectif Généraux</option>
+              <option value="Objectifs Spécifiques">Compétences Spécifiques</option>
+              <option value="Objectifs Généraux">Compétences Générales</option>
             </select>
 
 
