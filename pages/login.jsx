@@ -103,19 +103,3 @@ export function ControllerBuilder({set}) {
 
 }
 
-
-export function Admin() {
-    return (<>
-   <h1>Liste des contacts</h1>
-        <table border="1px">
-            <tr>
-                <td>Tel</td>
-            <td> <button className="btn">Voir le profil</button> </td>
-            </tr>
-        </table>
-
-
-
-
-    </>)
-}

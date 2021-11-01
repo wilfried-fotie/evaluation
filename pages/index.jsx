@@ -1,512 +1,474 @@
 import Head from 'next/head'
-import Image from 'next/image'
 import Add from '../Firebase/add'
+import getDocFunc from '../Firebase/getDocFunc'
 import styles from '../styles/Home.module.css'
-import React from "react"
-import Input from '../Components/Input'
+import React, { useEffect, useLayoutEffect } from "react"
 import Media from '../Components/Media'
 import { useForm } from "react-hook-form"
 import Loader from 'react-loader-spinner'
 import uploadAll from '../Firebase/uploadAll'
 import axios from 'axios'
+import { ControllerBuilder } from './login'
+import { db } from '../Firebase'
+import { collection, getDocs, query, where } from '@firebase/firestore'
+import updateDocument from '../Firebase/updateDoc'
+import deleteDocument from '../Firebase/deleteDoc'
+import fetchDocuments from '../Firebase/fetchDocuments'
+import { createPortal } from 'react-dom'
 
 
 
-export default function Home() {
-  const [user, setUser] = React.useState({name: "",date: "",tel :"" ,genre: "" })
-  const handleChange = (e)=>{
-    setUser(s => ({...s,[e.target.name]: e.target.value}))
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+export const SPECONTEXT = React.createContext({})
+
+function login({ values, values2}) {
+  const [login, setLogin] = React.useState()
+
+  useIsomorphicLayoutEffect(() => {
+    setLogin(localStorage.getItem('sudo'))
+
+  }, [login])
+
+
+
+  const speReducer = React.useCallback((state, action) => {
+    switch (action.type) {
+
+       case "ADD":
+                const newState = [...state[action.pre]]
+                newState.push({ ...action.data })
+                let finish = { ...state, [action.pre]: newState}
+                return finish
+
+                
+            case "DELETE":
+                const delState = [...state[action.pre]]
+
+                let num = action.id
+                delState.splice(num, 1)
+                finish = { ...state,  [action.pre]: delState  }
+                return finish
+            case "UPDATE":
+                const upState = [...state[action.pre]]
+                upState[action.id] = action.data
+                finish = { ...state, [action.pre]: upState  }
+                return finish
+       
+
+     
+    }
+
+  }, [])
+
+
+
+
+
+
+
+  const [data, dispacth] = React.useReducer(speReducer, { values, values2})
+
+
+
+
+  const value = React.useMemo(() => ({ data, dispacth }), [data, dispacth])
+  const [page,setActivePage] = React.useState(1)
+
+
+  return (
+    <div>
+      <main className={styles.main}>
+        {login ? <SPECONTEXT.Provider value={value}>{page == 1 ? <Home setActivePage={setActivePage} /> : <Page2 info={page} setActivePage = { setActivePage }/>} </SPECONTEXT.Provider>  : <ControllerBuilder set={setLogin} />}
+
+      </main>
+    </div>
+  )
+}
+
+export default login
+
+
+export function Home({setActivePage}) {
+  const [user, setUser] = React.useState({spe: ""})
+  const [v, setV] = React.useState(false)
+  const [index, setIndex] = React.useState(false)
+  const [loader, setLoader] = React.useState(false)
+
+  const data = React.useContext(SPECONTEXT).data.values
+  const data2 = React.useContext(SPECONTEXT).data.values2
+  const dispacth = React.useContext(SPECONTEXT).dispacth
+let spe = data
+  var len = 0
+spe.forEach(()=> len++)
+ 
+ 
+  const handleChange = (e) => {
+    setUser(s => ({ ...s,id: len == 0 ? parseInt(0,10) : parseInt(spe[len - 1].id, 10) + 1 , spe: e.target.value}))
   }
-  const { register, handleSubmit, formState: { errors, isSubmitSuccessful, isSubmitted, isValid } } = useForm({ mode: "onTouched"})
-  const onSubmit = async (data) => {
+ 
+  const handleClick = () => {
+    if (user.spe) {
+     
+      
+      Add({ name: user.spe }, "speciality", len.toString())
+      dispacth({ type: "ADD", name: "data", pre: "values", data: { name: user.spe, id: len == 0 ? parseInt(0, 10) : parseInt(spe[len - 1].id, 10) + 1 }})
+      setUser({ spe: "" })
 
-    if (isValid) {
-
-
-
+    } else {
+      alert("erreur avec cette valeur")
     }
   }
+  const handleUpdate = (index) => {
+    setV(true)
+    setIndex(index)
+  }
+  const handleDelete = async(index) => {
 
-  
+    const q = query(collection(db, "questionnaire"), where("spe_id", "==", parseInt(index, 10)));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+     
+      // console.log(doc.id, " => ", doc.data());
+      console.log({ id: doc.id, ...doc.data() })
+      deleteDocument("questionnaire", doc.id.toString()).then(() => 
+        dispacth({ type: "DELETE", id: parseInt(data2.indexOf({ id: doc.id, ...doc.data() }), 10), pre: "values2" })
+
+      ).catch(e => alert("erreur"))
+    });
+
+
+    deleteDocument("speciality", index).then(e =>
+
+      dispacth({ type: "DELETE", id: index, pre: "values" })
+    ).catch(e => alert("erreur"))
+   
+   
+
+
+  }
+
+
   return (
     <div className={styles.container}>
       <Head>
-        <title>Profil Pour Estuaire Emploie</title>
+        <title>Evaluation</title>
         <meta name="description" content="Créer votre profil estuaire emploie en quelques minutes" />
         <link rel="icon" href="/favicon.ico" />
-        <link href="http://fonts.cdnfonts.com/css/sofia-pro" rel="stylesheet"/>
+        {/* <link href="http://fonts.cdnfonts.com/css/sofia-pro" rel="stylesheet" /> */}
 
       </Head>
-
       <nav>
 
         <div className="logo"><img src="/logo.png" alt="logo" /> </div>
         <div className="text">Estuaire Services</div>
 
       </nav>
-
       <main className={styles.main}>
-        <h1>Bienvenue à estuaire emploie!</h1>
+        <h1>Evaluation estuaire emploie!</h1>
+        <div className="table">
+          <span>
+            Nom de la spécialité
+          </span>
+          <input type="text" value={user.spe} placeholder="Exp: cge" onChange={handleChange} />
 
-        <p>
-          <span className="error">Règle:</span> Lors du remplissage de ce fomulaire, les champs qui ne vous sont pas familiés ou assez explicite veuillez marquer <u className="error">"aucun"</u>  à l'intérieur.
-        </p>
-        
+        </div>
+        <center> <button className="btn" onClick={handleClick}>Ajouter</button> </center>
+        <center> <h2>Liste des spécialités</h2> </center>
+        <table>
+          <tbody>
+            {spe.map((e, k) => <tr key={k}><td>{e.name || e.spe}</td><td><button className="btn" onClick={() => setActivePage(e)}>Questionnaire</button><button className="btn" onClick={() => handleUpdate(e.id || k)}>Modifier</button><button className="err" onClick={() => handleDelete(e.id || k)}>
+              supprimé</button></td></tr>)}
 
-        <center >
-          <h2>Commencer à remplire</h2>
-</center>
-        <App/>
+          </tbody>
 
-       
+        </table>
+
+
+        {v && <Modal data={spe[index]} v={setV} id={index}/>}
       </main>
 
       <footer className={styles.footer}>
-       
+
       </footer>
     </div>
   )
 }
 
+export function Page2({ setActivePage, info }) {
+  const [user, setUser] = React.useState(false)
+  const [visible, v] = React.useState(false)
+  const [dataValue, setDataValues] = React.useState()
+  const data = React.useContext(SPECONTEXT).data.values2
+  const dispacth = React.useContext(SPECONTEXT).dispacth
 
-export function Modal() {
-  
+  const handleDelete = (index) => {
+
+
+
+    deleteDocument("questionnaire", index).then((e) => 
+       dispacth({ type: "DELETE", id: parseInt(info.id, 10), pre: "values2" })
+    
+    
+
+    ).catch(e => alert("erreur"))
+    
+}
+
+  const handleUpdate = (id, v) => {
+    v(true)
+    setDataValues(id)
+    
+  }
+
+
+
+
+
   return (<>
-    <div className="modalContainer">
-
-   
-    <p className="modal">
-      Svp veuillez patienter que vos informations soient envoyées!! <br />
-        <center>
+    <a className="btn" onClick={() => setActivePage(1)}>Retour</a>
+    <a className="btn" onClick={() => navigator.clipboard.writeText("/" + info.name  + "?id=" + info.id ) }>Copier le lien</a>
+    
+    <center> <h1>Questionnaire {info.name}</h1></center>
+    <center> <button className="btn" onClick={() => setUser(true)}>Ajouter une question</button> </center>
+    <center> <h2>Liste des questions</h2> </center>
+    <table>
+      <tbody>
+        <tr><td colSpan={2}>  <h5>Objectifs Spécifiques</h5></td></tr>
+      
+        {data.filter(e => e.spe_id == info.id && e.type == "Objectifs Spécifiques").map((e, j) => <tr key={j}><td>{e.name}</td><td><button onClick={() => handleUpdate(e.id, v )} className="btn">Modifier</button><button className="err" onClick={() => handleDelete(e.id )}>
+          supprimé</button></td></tr>)}
         
-         <Loader
-        type="TailSpin"
-        color="red"
-        height={50}
-        width={70}
-      /></center>
-    </p>
-  
-   </div>
+        <tr><td colSpan={2}> <h5>Objectifs Généraux</h5></td></tr>
+
+        {data.filter(e => e.spe_id == info.id && e.type == "Objectifs Généraux").map((e, j) => <tr key={j}><td>{e.name}</td><td><button onClick={() => handleUpdate(e.id, v )} className="btn">Modifier</button><button className="err" onClick={() => handleDelete(e.id )}>
+          supprimé</button></td></tr>)}
+
+      </tbody>
+   </table>
+   
+    
+
+
+    {user && <Modal2 v={setUser} info={info} />}
+    {visible && <Modal3 v={v} info={info} dataValue={data.filter(e => e.id == dataValue)}/>}
+
   </>)
-  
 }
 
 
-export function Modal2() {
+export function Modal({ data,v,id }) {
+  const [user, setUser] = React.useState(data && data.name )
+  const dispacth = React.useContext(SPECONTEXT).dispacth
+const [loader, setLoader] = React.useState(false)
+  const handleChange = (e) => {
+    setUser(e.target.value)
+  }
+  const handleUpdate = () => {
+    setLoader(true)
+    updateDocument("speciality", { name: user }, id.toString()).then(e => {
+      dispacth({ type: "UPDATE", name: "data", id: id, pre: "values", data: { name: user, id: id } })
 
-  return (<>
-    <div className="modalContainer">
+v(false)
 
-      <p className="modal">
-        <center><h1 style={{ color: "green" }}>Bravo</h1></center>
+    }).catch(e=>alert("une erreur est survenu")    )
+  }
+  return createPortal(<>
+    <div className="modalContainer" onClick={() => v(false)}>
 
-       Vos informations ont bien été enregistrés <br />
+      <p className="modal" onClick={(e)=>{e.stopPropagation()}}>
+        <span>
+            Nom de la spécialité
+          </span>
+          <input type="text" value={user} placeholder="Exp: cge" onChange={handleChange} />
+
+        
+        <center> <button className="btn" onClick={handleUpdate}>{loader && <Loader
+          type="TailSpin"
+          color="white"
+          height={20}
+          width={50}
+        />}Enregistrer</button> </center>
+          
       
-
       </p>
+      </div>
+    
+    </>, document.body)
+
+}
+
+
+export function Modal2({ v, info}) {
+  const { register, handleSubmit, formState: { errors, isValid } } = useForm({ mode: "onTouched" });
+  const [loader, setLoader] = React.useState(false)
+
+  const data = React.useContext(SPECONTEXT).data.values2
+  const dispacth = React.useContext(SPECONTEXT).dispacth
+  let spe = data
+  var len = 0
+  spe.forEach(() => len++)
+  const onSubmit = data => {
+setLoader(true)
+    if (isValid) {
+     
+      Add({ ...data, spe_id: parseInt(info.id,10) }, "questionnaire", len.toString())
+      dispacth({ type: "ADD", name: "data", pre: "values2", data: { ...data, spe_id: info.id, id: len == 0 ? parseInt(info.id, 10) : parseInt(spe[len - 1].id, 10) + 1 } })
+v(false)
+    }
+  }
+  return createPortal(<>
+    
+    <div className="modalContainer" onClick={() => v(false)}>
+
+      <div className="modal" onClick={(e) => { e.stopPropagation() }}>
+        <center><h4 > Ajouter une question</h4></center>
+        
+
+    <form onSubmit={handleSubmit(onSubmit)}>
+
+        <div className="table">
+          <span>
+              Nom de l'objectif
+          </span>
+            <input type="text" placeholder="Exp: apprendre à lire"  {...register("name", { required: true})} />
+  {errors && errors.name && <div className="error">
+            Ce champs est réquis
+          </div>}
+        </div>
+        <div className="table">
+          <span>
+           Type
+          </span>
+
+            <select {...register("type", { required: true })} >
+
+              <option value="Objectifs Spécifiques">Objectif Spécifique</option>
+              <option value="Objectifs Généraux">Objectif Généraux</option>
+            </select>
+            
+
+        
+        </div>
+          <center> <button className="btn" >{loader && <Loader
+            type="TailSpin"
+            color="white"
+            height={20}
+            width={50}
+          />}Enregistrer</button> </center>
+
+      
+</form>
+
+      </div>
 
     </div>
-  </>)
+  </>,document.body)
 
 }
 
 
-export  function App() {
-  const { register, handleSubmit, formState: { errors,isValid } } = useForm({mode: "onTouched"});
+
+export function Modal3({ v, info,dataValue }) {
+  const { register, handleSubmit, formState: { errors, isValid } } = useForm({ mode: "onTouched",defaultValues: dataValue[0] });
   const [loader, setLoader] = React.useState(false)
-  const [state, setState] = React.useState()
-  const [state2, setState2] = React.useState()
-  const [state3, setState3] = React.useState()
-  const [state4, setState4] = React.useState()
-  const [state5, setState5] = React.useState()
-  const [mod, setMod] = React.useState(false)
 
-  const onSubmit = data => {
+  const dispacth = React.useContext(SPECONTEXT).dispacth
   
+  const onSubmit = data => {
+    setLoader(true)
     if (isValid) {
-      setLoader(true);
-      axios.all([
-        Add({ ...data, logo: state ? (data.tel + state.logoValue.name) : "aucun", files: state2 ? [...state2.files].map(e => data.tel + e.name) : "aucun", present: state3 ? (data.tel + state3.present.name) : "aucun", portfolio: state5 ? [...state5.portfolio].map(e => data.tel + e.name) : "aucun"}),
-        state && uploadAll(data.tel + state.logoValue.name, state.logoValue, "Profil/"),
-        state3 && uploadAll(data.tel + state3.present.name, state3.present, "Profil/"),
 
-        state2 && [...state2.files].forEach(e => uploadAll(data.tel + e.name, e, "Profil/")),
-        state5 && [...state5.portfolio].forEach(e => uploadAll(data.tel + e.name, e, "Profil/")),
+      updateDocument("questionnaire", data, dataValue[0].id.toString()).then(e => {
+        dispacth({ type: "UPDATE", name: "data", id: dataValue[0].id, pre: "values2", data: data })
 
-      ]).then(() => setMod(true)).catch(() => alert("une erreur est survenu")).finally(() => { setLoader(false);})
-    
+        v(false)
+
+      }).catch(e => alert("une erreur est survenu"))
     }
-    
-
-
   }
- 
+  return createPortal(<>
 
+    <div className="modalContainer" onClick={() => v(false)}>
 
-  const handleImageChange = (e) => {
-    const name = e.target.name
-    const id = e.target.id
+      <div className="modal" onClick={(e) => { e.stopPropagation() }}>
+        <center><h4 > Ajouter une question</h4></center>
 
-    if (e.target.files && e.target.files[0]) {
+        <form onSubmit={handleSubmit(onSubmit)}>
 
+          <div className="table">
+            <span>
+              Nom de l'objectif
+            </span>
+            <input type="text" placeholder="Exp: apprendre à lire" {...register("name", { required: true })} />
+            {errors && errors.name && <div className="error">
+              Ce champs est réquis
+            </div>}
+          </div>
+          <div className="table">
+            <span>
+              Type
+            </span>
 
-      let reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload = (ev) => {
-        setState(s => {
-          return {
-            ...s,
-            logo: ev.target.result,
-            logoValue:  e.target.files[0],
+            <select {...register("type", { required: true })} >
 
-          }
-        });
-      };
-
-    }
-
-  }
-
-
-
-
-  const handleImageChange2 = (e) => {
-    const name = e.target.name
-    const id = e.target.id
-
-    if (e.target.files && e.target.files[0]) {
-
-
-      let reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload = (ev) => {
-        setState2(s => {
-          return {
-            ...s,
-            filesRes: ev.target.result,
-            files:  e.target.files,
-
-          }
-        });
-      };
-
-    }
-
-  }
-
-  const handleImageChange8 = (e) => {
-    const name = e.target.name
-    const id = e.target.id
-
-    if (e.target.files && e.target.files[0]) {
-
-
-      let reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload = (ev) => {
-        setState5(s => {
-          return {
-            ...s,
-            portfolioRes: ev.target.result,
-            portfolio: e.target.files,
-
-          }
-        });
-      };
-
-    }
-
-  }
-
-
-  const handleImageChange3 = (e) => {
-    const name = e.target.name
-    const id = e.target.id
-
-    if (e.target.files && e.target.files[0]) {
-
-
-      let reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload = (ev) => {
-        setState3(s => {
-          return {
-            ...s,
-            pres: ev.target.result,
-            present:  e.target.files[0],
-
-          }
-        });
-      };
-
-    }
-
-  }
+              <option value="Objectifs Spécifiques">Objectif Spécifique</option>
+              <option value="Objectifs Généraux">Objectif Généraux</option>
+            </select>
 
 
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-<div className="table">
-        <span>
-         Importer une photo de profil
-        </span>
-        <Media photo onChange={handleImageChange} state={state} />
-       
-      </div>
+          </div>
+          <center> <button className="btn" >{loader && <Loader
+            type="TailSpin"
+            color="white"
+            height={20}
+            width={50}
+          />}Enregistrer</button> </center>
 
-      <div className="table">
-        <span>
-          Nom complet
-        </span>
-        <input type="text" placeholder="Exp: Fotie wilfried" {...register("nom", { required: true, maxLength: 80 })} />
-{errors && errors.nom && <div className="error">
-Ce champs est réquis
-</div> }
-      </div>
-      <div className="table">
-        <span>
-          Date de naissance
-        </span>
-        <input type="text" placeholder="Exp: 18-03-1998 à Bafoussam"{...register("naissance", { required: true, maxLength: 100 })} />
-        {errors && errors.naissance && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
 
-    
-      <div className="table">
-        <span>
-          Adresse mail
-        </span>
-        <input type="email" placeholder="Exp: fotie@gmail.com ou Aucun" {...register("mail", {  pattern: /^\S+@\S+$/i })} />
-        
-      </div>
-      <div className="table">
-        <span>
-          Numéro de téléphone
-        </span>
-        <input type="tel" placeholder="Exp: 678656770" {...register("tel", { required: true, min: 600000000, max: 699999999 })} />
-        {errors && errors.tel && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table" >
-        <span>
-          Qualifications Scolaire
-        </span>
-        <table border="2px">
-          <tr ><th colSpan="3">Diplome - Année - Ecole</th></tr>
-          <tr>
-            <td colSpan="3">
-              <textarea placeholder="Bacc C  - 2019  - Lycéé bilingue de bafoussam" {...register("Qualification", { required: true, })} />
-              
-</td>
-          </tr>
-</table>
-        {errors && errors.Qualification && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-          Sexe
-        </span>
-        <div className="df">  <input {...register("Sexe", { required: true })} type="radio" value="Masculin" id="Masculin" />  <label htmlFor="Masculin">Masculin</label></div>
-       <div className="df"> <input {...register("Sexe", { required: true })} type="radio" value="Feminin" id="Feminin" /> <label htmlFor="Feminin">Feminin</label> </div>
-        {errors && errors.Sexe && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table" >
-        <span>
-          Qualifications Professionelles
-        </span>
-        <table border="2px">
-          <tr ><th colSpan="3">Attestation - Années - description</th></tr>
-          <tr>
-            <td colSpan="3">
-              <textarea placeholder="Attestation Microsoft Word  - 2019  - pour apprendre à saisir correvtement." {...register("QualificationPro")} />
-            </td>
-          </tr>
-        </table>
+        </form>
 
       </div>
-      <div className="table">
-        <span>
-          Langue parlées
-        </span>
-        <input type="textarea" placeholder="Exp: français et anglais" {...register("LanguesParle", { required: true })} />
-        {errors && errors.LanguesParle && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
 
-      <div className="table">
-        <span>
-          Langue écrites
-        </span>
-        <input type="textarea" placeholder="Exp: français et anglais" {...register("LanguesEcrites", { required: true })} />
-        {errors && errors.LanguesEcrites && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-    
+    </div>
+  </>, document.body)
 
-      <div className="table">
-        <span>
-          Prétention Salariale
-        </span>
-        <input type="text" placeholder="Exp: 60  0000 - 200 0000" {...register("Salaire", { required: true })} />
-        {errors && errors.Salaire && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-         Profession (Pour les etudiants à temps plein écrire: stagiaire en spécialité)
-        </span>
-        <input type="text" placeholder="Exp: Stagiaire en marketing Exp2 : Développeur mobile" {...register("Profession", { required: true })} />
-        {errors && errors.Profession && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-          Choix du métier que vous aimerer faire
-        </span>
-        <input type="text" placeholder="Exp: agronome" {...register("description_profession", { required: true })} />
-        {errors && errors.description_profession && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-          Nom sur facebook
-        </span>
-        <input type="text" placeholder="Nom sur facebook" {...register("facebook", { required: true })} />
-        {errors && errors.facebook && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-          Nom sur tiktok
-        </span>
-        <input type="text" placeholder="Nom sur tiktok" {...register("tiktok", { required: true })} />
-        {errors && errors.tiktok && <div className="error">
-          Ce champs est réquis
-        </div>}
-
-      </div>
-      <div className="table">
-        <span>
-          Nom sur instagram
-        </span>
-        <input type="text" placeholder="Nom sur instagram" {...register("instagram", { required: true })} />
-        {errors && errors.instagram && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-          Nom sur twitter
-        </span>
-        <input type="text" placeholder="Nom sur twitter" {...register("twitter", { required: true })} />
-        {errors && errors.twitter && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-
-     
-
-      
-      <div className="table">
-        <span>
-          Vidéo de présentation
-        </span>
-        <Media video onChange={handleImageChange3} state={state3} />
-      
-      </div>
-
-
-      <div className="table">
-        <span>
-          Ville-Region-Pays
-        </span>
-        <textarea placeholder="Ville-Region-Pays" {...register("loc", { required: true })} />
-        {errors && errors.loc && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-          Quartier
-        </span>
-        <input type="text" placeholder="Quartier" {...register("quartier", { required: true })} />
-        {errors && errors.quartier && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-
-      <div className="table">
-        <span>
-          Portfolio( Image de vos réalisations ou certifications)
-        </span>
-       
-        <Media photo mult onChange={handleImageChange8}  state={state5} />
-
-
-      </div>
-      <div className="table">
-        <span>
-          Différents Prix obtenu dans la vie
-        </span>
-        <textarea placeholder="Exp: Diplome de chant - 2021 - à l'église" {...register("price", { required: true })} />
-        {errors && errors.price && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-          Différentes expériences
-        </span>
-        <textarea placeholder="Exp: Employer à Insam - 2012-2014 Exp2: Employer à Camlait - 2018-2020 " {...register("diff", { required: true })} />
-
-        {errors && errors.diff && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
-      <div className="table">
-        <span>
-          Différentes formations extra-scolaire
-        </span>
-        <textarea placeholder="Exp: Formation en marketing - 2021 - sur openclassrooms " {...register("form", { required: true })} />
-        {errors && errors.form && <div className="error">
-          Ce champs est réquis
-        </div>}
-      </div>
- <div className="table">
-        <span>
-          Importer votre CV
-        </span>
-        <Media file onChange={handleImageChange2} state={state2}/>
-        
-        
-</div>
-    
-      {loader && <Modal />}
-      {mod && <Modal2 />}
-      
-      <center> <button type="submit" className="btn df">  {loader && <Loader
-        type="TailSpin"
-        color="white"
-        height={20}
-        width={50}
-      />}Envoyer</button></center>
-    </form>
-  );
 }
 
 
+
+export async function getServerSideProps({ query }) {
+
+  let values = []
+  let values2 = []
+
+
+  const querySnapshot = await getDocs(collection(db, "speciality"));
+  querySnapshot.forEach((doc) => {
+
+    values.push({ id: doc.id, ...doc.data() })
+  });
+
+  const querySnapshot2 = await getDocs(collection(db, "questionnaire"));
+  querySnapshot2.forEach((doc) => {
+
+    values2.push({ id: doc.id, ...doc.data() })
+  });
+
+  return {
+    props: {
+
+      values,
+      values2
+      
+
+
+
+    },
+  };
+
+
+
+}
